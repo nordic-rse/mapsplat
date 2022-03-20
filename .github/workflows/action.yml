@@ -18,9 +18,6 @@ inputs:
     description: 'The path to markdown file of the people index'
     required: true
     default: 'content/communities/local.md'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
 runs:
   using: 'docker'
   image: 'Dockerfile'
