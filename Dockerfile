@@ -13,4 +13,4 @@ FROM python:3.8
 ENV PYTHONPATH=/mapsplat/pkgs
 COPY --from=builder /mapsplat/__pypackages__/3.8/lib /project/pkgs
 
-ENTRYPOINT ["python", "-m", "project"]
+ENTRYPOINT ["mapsplat_action"]
