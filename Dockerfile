@@ -11,6 +11,8 @@ RUN pdm install --prod --no-lock --no-editable
 FROM python:3.8
 
 ENV PYTHONPATH=/mapsplat/pkgs
-COPY --from=builder /mapsplat/__pypackages__/3.8/lib /project/pkgs
+ENV PATH="/mapsplat/bin:${PATH}"
+COPY --from=builder /mapsplat/__pypackages__/3.8/bin /mapsplat/bin
+COPY --from=builder /mapsplat/__pypackages__/3.8/lib /mapsplat/pkgs
 
 ENTRYPOINT ["mapsplat_action"]
