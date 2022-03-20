@@ -1,0 +1,31 @@
+# action.yml
+name: 'Map Splat'
+description: 'Regenerate webpages from map data.yml'
+inputs:
+  data-path:
+    description: 'Path to data file to use as source data'
+    required: true
+    default: 'map/data.yml'
+  web-repo:
+    description: 'The path to the website repo within GitHub'
+    required: true
+    default: 'nordic-rse/nordic-rse.github.io'
+  by-institution-path:
+    description: 'The path to markdown file of the people index'
+    required: true
+    default: 'content/communities/by-institution'
+  index-path:
+    description: 'The path to markdown file of the people index'
+    required: true
+    default: 'content/communities/local.md'
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.data-path }}
+    - ${{ inputs.web-repo }}
+    - ${{ inputs.by-institution-path }}
+    - ${{ inputs.index-path }}
