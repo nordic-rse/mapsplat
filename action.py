@@ -6,7 +6,7 @@ from mapsplat import mapsplat
 from pathlib import Path
 from subprocess import run as prun
 import jinja2
-from github import PyGithub
+from github import Github
 
 
 WEB_WD = "mapsplat__web"
@@ -50,7 +50,7 @@ def main(argv=sys.argv[1:]):
     del os.environ["GIT_DIR"]
 
     # Ensure there is an open pull request from this branch
-    git = PyGithub('GITHUB_TOKEN')
+    git = Github('GITHUB_TOKEN')
     repo = git.get_repo(args.web_repo)
     found = False
     for pr in repo.get_pulls(state='open'):
