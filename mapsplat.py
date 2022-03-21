@@ -5,41 +5,47 @@ import sys
 from pathlib import Path
 from pprint import pprint
 from os import makedirs
+from os.path import relpath, dirname
 import pycountry
 from operator import itemgetter
+from shutil import rmtree
 
 START_PEOPLE_STRING = "[//]: # (START_PEOPLE_LIST_DNR)"
 END_PEOPLE_STRING = "[//]: # (END_PEOPLE_LIST_DNR)"
 
 
 INSTITUTION_NAME = """
-{%- if institution.longname -%}
+{% if institution.longname -%}
     {{ institution.longname }} ({{ institution.name }})
 {%- else -%}
     {{ institution.name }}
-{%- endif -%}
+{%- endif %}
 """.strip()
 
 
 INDEX_TEMPLATE = jinja2.Template("""
-# WARNING: Automatically generated. Do not modify.
-# Instead modify mapsplat or the map data and re-generate.
+[//]: # (WARNING: Automatically generated. Do not modify.)
+[//]: # (Instead modify mapsplat or the map data and re-generate.)
+
 {% for country_info in tree %}
  * {{ country_info.name }}
 {% for institution in country_info.institutions %}
-   * [""" + INSTITUTION_NAME + """](./{{ institution.name }}) [{{ institution.people|length }}]
+   * [""" + INSTITUTION_NAME + """]({{ by_institution_path }}/{{ institution.name|lower }}) [{{ institution.people|length }}]
 {% endfor %}
 {% endfor %}
 """, trim_blocks=True, lstrip_blocks=True)
 
 
 INSTITUTION_PAGE = jinja2.Template("""
-# WARNING: Automatically generated. Do not modify.
-# Instead modify mapsplat or the map data and re-generate.
-# {##}""" + INSTITUTION_NAME + """ RSEs
++++
++++
+[//]: # (WARNING: Automatically generated. Do not modify.)
+[//]: # (Instead modify mapsplat or the map data and re-generate.)
+
+# """ + INSTITUTION_NAME + """ RSEs
 {% for person in institution.people %}
  * {{ person.name }}
-{%- if person.institutional_page %}
+{% if person.institutional_page %}
    * Institutional page: [{{ person.institutional_page }}]({{ person.institutional_page }})
 {% endif %}
 {%- if person.homepage %}
@@ -107,11 +113,18 @@ def mapsplat(input, output, insert_index):
         }
         for country_iso2, country_info in data_tree.items() 
     ), key=itemgetter("name"))
+    rmtree(output)
     makedirs(output, exist_ok=True)
-    index_text = INDEX_TEMPLATE.render({"tree": data_tree})
+
+    up_one = insert_index is not None and insert_index != "_index.md"
+    by_institution_path = ("../" if up_one else "") + relpath(output, dirname(insert_index))
+    index_text = INDEX_TEMPLATE.render({
+        "tree": data_tree,
+        "by_institution_path": by_institution_path,
+    })
     if insert_index:
         with open(insert_index, "r+") as index_f:
-            lines = index_f.splitlines(keepends=True)
+            lines = index_f.read().splitlines(keepends=True)
             start_line_idx = None
             end_line_idx = None
             for idx, line in enumerate(lines):
@@ -120,18 +133,20 @@ def mapsplat(input, output, insert_index):
                 elif start_line_idx is not None and line.startswith(END_PEOPLE_STRING):
                     end_line_idx = idx
             if start_line_idx is not None and end_line_idx is not None:
-                lines = [*lines[:start_line_idx + 1], index_text, "\n", *lines[:end_line_idx + 1]]
+                lines = [*lines[:start_line_idx + 1], index_text, "\n", *lines[end_line_idx:]]
             else:
                 print("Could not find place to insert people list", file=sys.stderr)
                 sys.exit(-1)
             index_f.seek(0)
             index_f.write("".join(lines))
             index_f.truncate()
-    else;
+        with open(output / "_index.md", "w") as index_f:
+            index_f.write("+++\n+++")
+    else:
         with open(output / "_index.md", "w") as index_f:
             index_f.write(index_text)
     for place_info in by_place.values():
-        with open(output / (place_info["name"] + ".md"), "w") as place_f:
+        with open(output / (place_info["name"].lower() + ".md"), "w") as place_f:
             place_f.write(INSTITUTION_PAGE.render({
                 "institution": place_info
             }))
