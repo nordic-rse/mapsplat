@@ -6,7 +6,7 @@ from mapsplat import mapsplat
 from pathlib import Path
 from subprocess import run as prun
 import jinja2
-import PyGithub
+from github import PyGithub
 
 
 WEB_WD = "mapsplat__web"
